@@ -1,7 +1,0 @@
-.env
-bin/
-vendor/
-*.exe
-*.log
-node_modules/
-.DS_Store
