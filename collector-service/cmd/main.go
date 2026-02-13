@@ -6,12 +6,16 @@ import (
 	"time"
 
 	"github.com/Chintukr2004/collector/internal/worker"
+	"github.com/joho/godotenv"
+
 
 	"github.com/Chintukr2004/collector/internal/repository"
 	"github.com/Chintukr2004/collector/pkg/db"
 )
 
 func main() {
+
+	godotenv.Load()
 
 	database := db.NewDB()
 	repo := repository.NewServiceRepository(database)

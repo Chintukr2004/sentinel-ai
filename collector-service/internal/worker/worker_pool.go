@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/Chintukr2004/collector/internal/alerter"
 	"github.com/Chintukr2004/collector/internal/checker"
 	"github.com/Chintukr2004/collector/internal/models"
 	"github.com/Chintukr2004/collector/internal/repository"
@@ -48,8 +49,12 @@ func StartWorkerPool(
 				if result.Status == "DOWN" && !active {
 
 					log.Println("🚨 INCIDENT STARTED for", result.ServiceName)
+					err := alerter.Send("🚨 INCIDENT: " + result.ServiceName + " is DOWN")
+					if err != nil {
+						log.Println("failed to send alert:", err)
+					}
 
-					err := incidentRepo.CreateIncident(context.Background(), result.ServiceID)
+					err = incidentRepo.CreateIncident(context.Background(), result.ServiceID)
 					if err != nil {
 						log.Println("Failed to create incident:", err)
 					}
@@ -59,8 +64,11 @@ func StartWorkerPool(
 				if result.Status == "UP" && active {
 
 					log.Println("✅ INCIDENT RESOLVED for", result.ServiceName)
-
-					err := incidentRepo.ResolveIncident(context.Background(), result.ServiceID)
+					err := alerter.Send("✅ RESOLVED: " + result.ServiceName + " is back UP")
+					if err != nil {
+						log.Println("failed to send alert:", err)
+					}
+					err = incidentRepo.ResolveIncident(context.Background(), result.ServiceID)
 					if err != nil {
 						log.Println("Failed to resolve incident:", err)
 					}

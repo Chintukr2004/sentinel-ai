@@ -10,22 +10,33 @@ import (
 
 func NewDB() *pgxpool.Pool {
 
-	dsn := "postgres://admin:admin@localhost:5433/sentinel"
+	dsn := "postgres://admin:admin@postgres:5432/sentinel"
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	var dbpool *pgxpool.Pool
+	var err error
 
-	dbpool, err := pgxpool.New(ctx, dsn)
-	if err != nil {
-		log.Fatalf("Unable to create connection pool: %v", err)
+	for i := 0; i < 10; i++ {
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+		dbpool, err = pgxpool.New(ctx, dsn)
+		if err == nil {
+
+			err = dbpool.Ping(ctx)
+			if err == nil {
+				cancel()
+				log.Println("Connected to PostgreSQL")
+				return dbpool
+			}
+		}
+
+		cancel()
+
+		log.Println("⏳ Database not ready... retrying in 2 seconds")
+		time.Sleep(2 * time.Second)
 	}
 
-	err = dbpool.Ping(ctx)
-	if err != nil {
-		log.Fatalf("Database not reachable: %v", err)
-	}
+	log.Fatal("Could not connect to database after retries")
 
-	log.Println("✅ Connected to PostgreSQL")
-
-	return dbpool
+	return nil
 }
